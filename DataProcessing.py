@@ -12,7 +12,6 @@ wordOnlyRe = re.compile(r"[\w'-]+")
 # Word like "Feed'st" and "youth's" will be treated as one single word
 # Hyphened words are also treated as one word
 # Single quotes not in the middle of the word will be ignored
-
 def loadShake(sepPuncs=True, ignoreSingleQuotes=False):
     sonnets = []
     with open('./data/shakespeare.txt', 'r') as f:
