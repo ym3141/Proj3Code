@@ -43,9 +43,9 @@ class HiddenMarkovModel:
 
         self.L = len(A)
         self.D = len(O[0])
-        self.A = A
-        self.O = O
-        self.A_start = [1. / self.L for _ in range(self.L)]
+        self.A = np.array(A)
+        self.O = np.array(O)
+        self.A_start = np.ones(self.L) / self.L
 
 
     def viterbi(self, x):
@@ -73,10 +73,6 @@ class HiddenMarkovModel:
         probs = [[0. for _ in range(self.L)] for _ in range(M + 1)]
         seqs = [['' for _ in range(self.L)] for _ in range(M + 1)]
 
-        ###
-        ###
-        ### 
-        ### TODO: Insert Your Code Here (2A)
         for i in range(self.L):
             probs[1][i] = self.A_start[i] * self.O[i][x[0]]
             seqs[1][i] = str(i)
@@ -135,17 +131,11 @@ class HiddenMarkovModel:
         for i in range(self.L):
             alphas[1][i] = self.A_start[i] * self.O[i][x[0]]
 
-        for t in range(2,M+1):
+        for t in range(2, M+1):
             for i in range(self.L):
-                prob = 0
-                for j in range(self.L):
-                    temp = alphas[t-1][j] * self.A[j][i] * self.O[i][x[t-1]]
-                    prob = prob + temp
-                alphas[t][i] = prob
+                alphas[t][i] = (alphas[t-1] * self.A[:,i] * self.O[i][x[t-1]]).sum()
             if normalize:
-                norm = sum(alphas[t])
-                for j in range(self.L):
-                    alphas[t][j] = 1.0*alphas[t][j]/norm
+                alphas[t] = alphas[t] / alphas[t].sum()
 
         return alphas
 
@@ -181,15 +171,9 @@ class HiddenMarkovModel:
 
         for t in range(M-1,-1,-1):
             for i in range(self.L):
-                prob = 0
-                for j in range(self.L):
-                    temp = betas[t+1][j] * self.A[i][j] * self.O[j][x[t]]
-                    prob = prob + temp
-                betas[t][i] = prob
+                betas[t][i] = (betas[t+1] * self.A[i] * self.O[:, x[t]]).sum()
             if normalize:
-                norm = sum(betas[t])
-                for j in range(self.L):
-                    betas[t][j] = 1.0*betas[t][j]/norm
+                betas[t] = betas[t] / betas[t].sum()
 
         return betas
 
@@ -260,15 +244,15 @@ class HiddenMarkovModel:
             startTime = time()
 
             # Numerator and denominator for updating A and O.
-            A_n = [[0. for _ in range(self.L)] for _ in range(self.L)] # sum of probabilites of transitions from state i to state j
-            O_n = [[0. for _ in range(self.D)] for _ in range(self.L)] # sum of probabilites in state i and observing j
-            A_d = [0. for _ in range(self.L)] # sum of probabilites of transitions from state i
-            O_d = [0. for _ in range(self.L)] # sum of probabilites in state i
+            # A_n = [[0. for _ in range(self.L)] for _ in range(self.L)] # sum of probabilites of transitions from state i to state j
+            # O_n = [[0. for _ in range(self.D)] for _ in range(self.L)] # sum of probabilites in state i and observing j
+            # A_d = [0. for _ in range(self.L)] # sum of probabilites of transitions from state i
+            # O_d = [0. for _ in range(self.L)] # sum of probabilites in state i
 
-            # A_n = np.zeros((self.L, self.L))
-            # O_n = np.zeros((self.L, self.D))
-            # A_d = np.zeros(self.L)
-            # O_d = np.zeros(self.L)
+            A_n = np.zeros((self.L, self.L))
+            O_n = np.zeros((self.L, self.D))
+            A_d = np.zeros(self.L)
+            O_d = np.zeros(self.L)
 
             # For each row of input sequence:
             for t1 in range(len(X)):
@@ -280,6 +264,8 @@ class HiddenMarkovModel:
                 # Compute the alphas and betas
                 alphas = self.forward(Xt1, normalize=True)
                 betas = self.backward(Xt1, normalize=True)
+
+                # print("Iteration: {0}; Checkpoint#1.0: at {1:.2f}s".format(str(itera+1), time()-startTime))
 
                 for t2 in range(1, M + 1):
                     p1 = [0. for _ in range(self.L)]
@@ -301,36 +287,31 @@ class HiddenMarkovModel:
                         if t2 < M:
                             A_d[q] += p1[q]
 
+                # print("Iteration: {0}; Checkpoint#1.1: at {1:.2f}s".format(str(itera+1), time()-startTime))
+
                 for t2 in range(1, M):
-                    p2 = [[0. for _ in range(self.L)] for _ in range(self.L)]
+                    p2 = np.zeros((self.L, self.L))
 
                     # E step - Compute p2
-                    norm_p2 = 0
                     for qi in range(self.L):
-                        for qj in range(self.L):
-                            p2[qi][qj] = alphas[t2][qi] * self.A[qi][qj] * self.O[qj][Xt1[t2]] * betas[t2+1][qj]
-                            norm_p2 = norm_p2 + p2[qi][qj]
+                        p2[qi] = alphas[t2][qi] * self.A[qi] * self.O[:,Xt1[t2]] * betas[t2+1]
 
                     # Normalize p2.
-                    for qi in range(self.L):
-                        for qj in range(self.L):
-                            p2[qi][qj] /= norm_p2
+                    p2 = p2 / p2.sum()
 
                     # Update A_n
-                    for qi in range(self.L):
-                        for qj in range(self.L):
-                            A_n[qi][qj] += p2[qi][qj]
+                    A_n = A_n + p2
+
+                # print("Iteration: {0}; Checkpoint#1.2: at {1:.2f}s".format(str(itera+1), time()-startTime))
 
             # M - step
             for qi in range(self.L):
-                for qj in range(self.L):
-                    self.A[qi][qj] = A_n[qi][qj] / A_d[qi]
+                self.A[qi] = A_n[qi] / A_d[qi]
 
             for qi in range(self.L):
-                for oj in range(self.D):
-                    self.O[qi][oj] = O_n[qi][oj] / O_d[qi]
+                self.O[qi] = O_n[qi] / O_d[qi]
 
-            print("Iteration: {0}; Took {1:.2f}ms".format(str(itera+1), time()-startTime))
+            print("Iteration: {0}; Took {1:.2f}s".format(str(itera+1), time()-startTime))
         pass
 
 
