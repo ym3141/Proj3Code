@@ -1,0 +1,22 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "DataProcessingTest",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/DataProcessing.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "HMMsonnet",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/HMMsonnet_YM.py",
+            "console": "integratedTerminal"
+        },
+    ]
+}

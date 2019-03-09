@@ -71,7 +71,7 @@ def loadShake(sepPuncs=True, matchSyllableDic=True, toLower=True):
 
 
 # Function to load and encode sonnets and syllable dictionary of Shakespear.
-    # Also return some useful dictionaries: the dict for everything to number & the dict for punctruation to number
+    # Also return some useful dictionaries: the dict for number to word/punctruation/newline & the dict for punctruation to number
     # refers to loadShake comments for more detailed explanation.
 def encodedShake():
     sonnets, syllaDict = loadShake()
@@ -79,16 +79,17 @@ def encodedShake():
     for word in [w for sonnet in sonnets for line in sonnet for w in line]:
         if not word in wordSetList:
             wordSetList.append(word)
+    wordSetList.append('\n')
     word2code = dict(zip(wordSetList, (range(len(wordSetList)))))
 
     punc2code = dict()
     for word in word2code:
-        if not word in syllDict:
+        if not word in syllaDict:
             punc2code[word] = word2code[word]
 
     encodedSyllaDict = dict()
     for word in word2code:
-        if word in syllDict:
+        if word in syllaDict:
             encodedSyllaDict[word2code[word]] = syllaDict[word]
 
     encodedSonnets = []
@@ -96,12 +97,16 @@ def encodedShake():
         encodedSonnet = []
         for line in sonnet:
             encodedLine = [word2code[w] for w in line]
-            encodedSonnet.append(encodedLine)
+            encodedSonnet = encodedSonnet + encodedLine + [word2code['\n']]
         encodedSonnets.append(encodedSonnet)
 
+    code2word = dict(zip(range(len(wordSetList)), wordSetList))
 
-    return encodedSonnets, encodedSyllaDict, word2code, punc2code
-    
+    return encodedSonnets, encodedSyllaDict, code2word, punc2code
+
+
+def code2sonnet(codes, code2word):
+    return [code2word[c] for c in codes]
 
 
 if __name__ == '__main__':
