@@ -1,6 +1,41 @@
+#########################################
+# CS/CNS/EE 155 2018
+# Problem Set 6
+#
+# Author:       Andrew Kang
+# Description:  Set 6 skeleton code
+########################################
+
+# You can use this (optional) skeleton code to complete the HMM
+# implementation of set 5. Once each part is implemented, you can simply
+# execute the related problem scripts (e.g. run 'python 2G.py') to quickly
+# see the results from your code.
+#
+# Some pointers to get you started:
+#
+#     - Choose your notation carefully and consistently! Readable
+#       notation will make all the difference in the time it takes you
+#       to implement this class, as well as how difficult it is to debug.
+#
+#     - Read the documentation in this file! Make sure you know what
+#       is expected from each function and what each variable is.
+#
+#     - Any reference to "the (i, j)^th" element of a matrix T means that
+#       you should use T[i][j].
+#
+#     - Note that in our solution code, no NumPy was used. That is, there
+#       are no fancy tricks here, just basic coding. If you understand HMMs
+#       to a thorough extent, the rest of this implementation should come
+#       naturally. However, if you'd like to use NumPy, feel free to.
+#
+#     - Take one step at a time! Move onto the next algorithm to implement
+#       only if you're absolutely sure that all previous algorithms are
+#       correct. We are providing you waypoints for this reason.
+#
+# To get started, just fill in code where indicated. Best of luck!
+
 import random
 import numpy as np
-from time import time
 
 class HiddenMarkovModel:
     '''
@@ -43,9 +78,9 @@ class HiddenMarkovModel:
 
         self.L = len(A)
         self.D = len(O[0])
-        self.A = np.array(A)
-        self.O = np.array(O)
-        self.A_start = np.ones(self.L) / self.L
+        self.A = A
+        self.O = O
+        self.A_start = [1. / self.L for _ in range(self.L)]
 
 
     def viterbi(self, x):
@@ -73,6 +108,10 @@ class HiddenMarkovModel:
         probs = [[0. for _ in range(self.L)] for _ in range(M + 1)]
         seqs = [['' for _ in range(self.L)] for _ in range(M + 1)]
 
+        ###
+        ###
+        ### 
+        ### TODO: Insert Your Code Here (2A)
         for i in range(self.L):
             probs[1][i] = self.A_start[i] * self.O[i][x[0]]
             seqs[1][i] = str(i)
@@ -100,6 +139,7 @@ class HiddenMarkovModel:
         #max_seq = ''
         return max_seq
 
+
     def forward(self, x, normalize=False):
         '''
         Uses the forward algorithm to calculate the alpha probability
@@ -126,18 +166,33 @@ class HiddenMarkovModel:
         '''
 
         M = len(x)      # Length of sequence.
-        alphas = np.zeros((M + 1, self.L))
+        alphas = [[0. for _ in range(self.L)] for _ in range(M + 1)]
 
+        ###
+        ###
+        ### 
+        ### TODO: Insert Your Code Here (2Bi)
         for i in range(self.L):
             alphas[1][i] = self.A_start[i] * self.O[i][x[0]]
 
-        for t in range(2, M+1):
+        for t in range(2,M+1):
             for i in range(self.L):
-                alphas[t][i] = (alphas[t-1] * self.A[:,i] * self.O[i][x[t-1]]).sum()
+                prob = 0
+                for j in range(self.L):
+                    temp = alphas[t-1][j] * self.A[j][i] * self.O[i][x[t-1]]
+                    prob = prob + temp
+                alphas[t][i] = prob
             if normalize:
-                alphas[t] = alphas[t] / alphas[t].sum()
+                norm = sum(alphas[t])
+                for j in range(self.L):
+                    alphas[t][j] = 1.0*alphas[t][j]/norm
+
+        ###
+        ###
+        ###
 
         return alphas
+
 
     def backward(self, x, normalize=False):
         '''
@@ -165,15 +220,29 @@ class HiddenMarkovModel:
         '''
 
         M = len(x)      # Length of sequence.
+        betas = [[0. for _ in range(self.L)] for _ in range(M + 1)]
 
-        betas = np.zeros((M + 1, self.L))
-        betas[M, :] = 1
+        ###
+        ###
+        ### 
+        ### TODO: Insert Your Code Here (2Bii)
+        for i in range(self.L):
+            betas[M][i] = 1
 
         for t in range(M-1,-1,-1):
             for i in range(self.L):
-                betas[t][i] = (betas[t+1] * self.A[i] * self.O[:, x[t]]).sum()
+                prob = 0
+                for j in range(self.L):
+                    temp = betas[t+1][j] * self.A[i][j] * self.O[j][x[t]]
+                    prob = prob + temp
+                betas[t][i] = prob
             if normalize:
-                betas[t] = betas[t] / betas[t].sum()
+                norm = sum(betas[t])
+                for j in range(self.L):
+                    betas[t][j] = 1.0*betas[t][j]/norm
+        ###
+        ###
+        ###
 
         return betas
 
@@ -199,6 +268,12 @@ class HiddenMarkovModel:
                         Note that the elements in X line up with those in Y.
         '''
 
+        # Calculate each element of A using the M-step formulas.
+
+        ###
+        ###
+        ### 
+        ### TODO: Insert Your Code Here (2C)
         for i in range(self.L):
             for j in range(self.L):
                 N_ij = 0 # expected number of transitions from state i to state j
@@ -211,7 +286,16 @@ class HiddenMarkovModel:
                             N_i = N_i + 1
                 self.A[i][j] = 1.0 * N_ij / N_i
 
+        ###
+        ###
+        ###
 
+        # Calculate each element of O using the M-step formulas.
+
+        ###
+        ###
+        ### 
+        ### TODO: Insert Your Code Here (2C)
         for i in range(self.L):
             for j in range(self.D):
                 N_ij = 0 # expected number of times in state i and observing j
@@ -223,8 +307,12 @@ class HiddenMarkovModel:
                         if Y[ii][jj] == i:
                             N_i = N_i + 1
                 self.O[i][j] = 1.0 * N_ij / N_i
+        ###
+        ###
+        ###
 
         pass
+
 
     def unsupervised_learning(self, X, N_iters):
         '''
@@ -240,32 +328,29 @@ class HiddenMarkovModel:
             N_iters:    The number of iterations to train on.
         '''
 
+        ###
+        ###
+        ### 
+        ### TODO: Insert Your Code Here (2D)
+
         for itera in range(N_iters):
-            startTime = time()
+            print("Iteration: " + str(itera+1))
 
             # Numerator and denominator for updating A and O.
-            # A_n = [[0. for _ in range(self.L)] for _ in range(self.L)] # sum of probabilites of transitions from state i to state j
-            # O_n = [[0. for _ in range(self.D)] for _ in range(self.L)] # sum of probabilites in state i and observing j
-            # A_d = [0. for _ in range(self.L)] # sum of probabilites of transitions from state i
-            # O_d = [0. for _ in range(self.L)] # sum of probabilites in state i
-
-            A_n = np.zeros((self.L, self.L))
-            O_n = np.zeros((self.L, self.D))
-            A_d = np.zeros(self.L)
-            O_d = np.zeros(self.L)
+            A_n = [[0. for _ in range(self.L)] for _ in range(self.L)] # sum of probabilites of transitions from state i to state j
+            O_n = [[0. for _ in range(self.D)] for _ in range(self.L)] # sum of probabilites in state i and observing j
+            A_d = [0. for _ in range(self.L)] # sum of probabilites of transitions from state i
+            O_d = [0. for _ in range(self.L)] # sum of probabilites in state i
 
             # For each row of input sequence:
             for t1 in range(len(X)):
-                
-                Xt1 = X[t1]
+
                 # Sequence length
-                M = len(Xt1)
+                M = len(X[t1])
 
                 # Compute the alphas and betas
-                alphas = self.forward(Xt1, normalize=True)
-                betas = self.backward(Xt1, normalize=True)
-
-                # print("Iteration: {0}; Checkpoint#1.0: at {1:.2f}s".format(str(itera+1), time()-startTime))
+                alphas = self.forward(X[t1], normalize=True)
+                betas = self.backward(X[t1], normalize=True)
 
                 for t2 in range(1, M + 1):
                     p1 = [0. for _ in range(self.L)]
@@ -283,35 +368,43 @@ class HiddenMarkovModel:
                     # Update O_d, O_n and A_d
                     for q in range(self.L):
                         O_d[q] = O_d[q] + p1[q]
-                        O_n[q][Xt1[t2-1]] += p1[q]
+                        O_n[q][X[t1][t2-1]] += p1[q]
                         if t2 < M:
                             A_d[q] += p1[q]
 
-                # print("Iteration: {0}; Checkpoint#1.1: at {1:.2f}s".format(str(itera+1), time()-startTime))
-
                 for t2 in range(1, M):
-                    p2 = np.zeros((self.L, self.L))
+                    p2 = [[0. for _ in range(self.L)] for _ in range(self.L)]
 
                     # E step - Compute p2
+                    norm_p2 = 0
                     for qi in range(self.L):
-                        p2[qi] = alphas[t2][qi] * self.A[qi] * self.O[:,Xt1[t2]] * betas[t2+1]
+                        for qj in range(self.L):
+                            p2[qi][qj] = alphas[t2][qi] * self.A[qi][qj] * self.O[qj][X[t1][t2]] * betas[t2+1][qj]
+                            norm_p2 = norm_p2 + p2[qi][qj]
 
                     # Normalize p2.
-                    p2 = p2 / p2.sum()
+                    for qi in range(self.L):
+                        for qj in range(self.L):
+                            p2[qi][qj] /= norm_p2
 
                     # Update A_n
-                    A_n = A_n + p2
-
-                # print("Iteration: {0}; Checkpoint#1.2: at {1:.2f}s".format(str(itera+1), time()-startTime))
+                    for qi in range(self.L):
+                        for qj in range(self.L):
+                            A_n[qi][qj] += p2[qi][qj]
 
             # M - step
             for qi in range(self.L):
-                self.A[qi] = A_n[qi] / A_d[qi]
+                for qj in range(self.L):
+                    self.A[qi][qj] = A_n[qi][qj] / A_d[qi]
 
             for qi in range(self.L):
-                self.O[qi] = O_n[qi] / O_d[qi]
+                for oj in range(self.D):
+                    self.O[qi][oj] = O_n[qi][oj] / O_d[qi]
 
-            print("Iteration: {0}; Took {1:.2f}s".format(str(itera+1), time()-startTime))
+        ###
+        ###
+        ###
+
         pass
 
 
@@ -331,6 +424,11 @@ class HiddenMarkovModel:
 
         emission = []
         states = []
+
+        ###
+        ###
+        ### 
+        ### TODO: Insert Your Code Here (2F)
 
         state_gen = random.randint(0, self.L-1)
 
@@ -352,6 +450,10 @@ class HiddenMarkovModel:
                 if ran <= 1e-6:
                     break
             state_gen = j
+
+        ###
+        ###
+        ###
 
         return emission, states
 

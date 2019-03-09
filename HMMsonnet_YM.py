@@ -1,4 +1,4 @@
-from HMM import HiddenMarkovModel, unsupervised_HMM
+from HMM_acc import HiddenMarkovModel, unsupervised_HMM
 from DataProcessing import encodedShake, code2sonnet
 
 
@@ -9,6 +9,7 @@ if __name__ == '__main__':
 
     print(' '.join(code2sonnet(encodedSonnets[0], code2word)))
 
-    for sonnet in HMmodel.generate_emission(200):
-        print(' '.join(code2sonnet(sonnet, code2word)))
-        print()
+    sonnet = HMmodel.generate_emission(200)[0]
+    
+    print(' '.join(code2sonnet(sonnet, code2word)))
+    print()
