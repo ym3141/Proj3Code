@@ -1,4 +1,4 @@
-from HMM_acc import HiddenMarkovModel, unsupervised_HMM
+from HMM_fast import HiddenMarkovModel, unsupervised_HMM
 from DataProcessing import encodedShake, code2sonnet
 
 
