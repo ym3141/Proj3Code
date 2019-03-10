@@ -172,9 +172,9 @@ class HiddenMarkovModel:
             alphas[i] = (alphas[i - 1][np.newaxis] @ self.A) * \
                         self.O[:, x[i - 1]]
 
-        # Normalize probabilities if specified
-        if normalize:
-            alphas /= np.sum(alphas, axis=1)[:, np.newaxis]
+            # Normalize probabilities if specified
+            if normalize:
+                alphas[i] /= np.sum(alphas[i])
 
         return alphas
 
@@ -218,9 +218,9 @@ class HiddenMarkovModel:
             betas[i] = (betas[i + 1] * self.O[:, x[i]])[np.newaxis] @ \
                        self.A.T
 
-        # Normalize probabilities if specified
-        if normalize:
-            betas /= np.sum(betas, axis=1)[:, np.newaxis]
+            # Normalize probabilities if specified
+            if normalize:
+                betas[i] /= np.sum(betas[i])
 
         return betas
 
