@@ -5,6 +5,8 @@ sonnetNumLineRe = re.compile(r'\s+\d+\n')
 wordPuncRe = re.compile(r"[\w'-]+|[.,!?;]")
 wordOnlyRe = re.compile(r"[\w'-]+")
 
+puncSet = list('!,.;?\n')
+
 # Function to return a dict of the syllable dictionary
 # Key will be word, and value will be a tuple that contains several possible number of syllables
 # Note values in tuples are all str, since we have to deal with things like "E1"
@@ -173,8 +175,36 @@ def encodedShake():
     return encodedSonnets, encodedSyllaDict, code2word, punc2code
 
 
-def code2sonnet(codes, code2word):
-    return [code2word[c] for c in codes]
+def Convert2SonnetNaive(codeSeq, code2word):
+    '''
+    A coverter that convert code sequence (not words) to a sonnet, naively.
+    It will break at each '\n' and count to 14 lines.
+    '''
+
+    sonnet = []
+    linecount = 1
+    startOfLine = True
+    for code in codeSeq[1:]:
+        word = code2word[code]
+        if word not in puncSet:
+            if startOfLine:
+                sonnet = sonnet + [word]
+                startOfLine = False
+            else:
+                sonnet = sonnet + [' ', word]
+        elif word == '\n':
+            sonnet = sonnet + [word]
+            startOfLine = True
+            linecount += 1
+        else:
+            sonnet.append(word)
+        
+        if linecount == 15: 
+            return True, ''.join(sonnet)
+    if linecount == 14:
+        return True, ''.join(sonnet)
+    else:
+        return False, ''.join(sonnet)
 
 
 if __name__ == '__main__':
