@@ -1,13 +1,18 @@
 import numpy as np
 import os.path
 
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.layers import Dense
 from keras.utils import to_categorical
 from DataProcessing import encodedShake, loadShake_char
+from RNNProcessing import build_model_LSTM
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
-def generateTrainData(encodedSonnets, dictLen, dim=10):
+def generateTrainData(encodedSonnets, dim=10):
+    '''
+    Generate training data from sonnets
+    '''
     seqs = []
     # Iterate over each document in reference text
     for sonnet in encodedSonnets:
@@ -15,8 +20,8 @@ def generateTrainData(encodedSonnets, dictLen, dim=10):
         for i in range(dim, len(sonnet)):
             seqs.append(sonnet[i - dim: i + 1])
     seqs = np.array(seqs)
-    X_code = to_categorical(seqs[:, :-1], num_classes=dictLen)
-    y_code = to_categorical(seqs[:, -1], num_classes=dictLen)
+    X_code = seqs[:, :-1]
+    y_code = seqs[:, -1]
 
     return X_code, y_code
 
@@ -24,7 +29,6 @@ def gnerateEmbedTrain(encodedSonnets, window_size=4):
     '''
     Function to generate data for word2vec
     '''
-
     trainX = []
     trainY = []
     for sonnet in encodedSonnets:
@@ -38,7 +42,9 @@ def gnerateEmbedTrain(encodedSonnets, window_size=4):
 
 
 def trainWord2Vec(latentFactorN = 10, weightSave = './TrainingTemp/Word2vecWeight.npy', epoch=20):
-
+    '''
+    Train a word2vec model based on Shakespear's sonnet, and save it's weight in TrainingTemp folder
+    '''
     encodedSonnets, encodedSyllaDict, code2word, punc2code = encodedShake()
     X, y = gnerateEmbedTrain(encodedSonnets)    
     
@@ -65,6 +71,38 @@ def most_similar_pairs(weight_matrix, word_to_index):
     
     return simiMat
 
+def trainRNNvec(encodedSonnets, weight, modelSave='./TrainingTemp/RNN_word2vec-LSTM.h5'):
+    '''
+    Train a RNN model based on word2vec weight matrix
+    '''
+
+    trainX, trainY = generateTrainData(encodedSonnets)
+    trainXvec = []
+    trainYvec = []
+
+    for i in range(len(trainX)):
+        trainYvec.append(weight[trainY[i]])
+        seqX = []
+        for x in trainX[i]:
+            seqX.append(weight[x])
+        trainXvec.append(seqX)
+
+    trainXvec = np.array(trainXvec)
+    trainYvec = np.array(trainYvec)
+
+    model = build_model_LSTM(trainXvec.shape[1:], trainYvec.shape[1])
+    model.summary()
+
+    early_stopping = EarlyStopping(monitor='val_loss', patience=50)
+    model_checkpoint = ModelCheckpoint(modelSave, monitor='val_loss', save_best_only=True)
+
+    # Compile and fit model
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    fit = model.fit(trainXvec, trainYvec, batch_size=64, epochs=200, validation_split=0.2, callbacks=[early_stopping, model_checkpoint], verbose=1)
+
+    return model
+
+
 
 if __name__ == '__main__':
     encodedSonnets, encodedSyllaDict, code2word, punc2code = encodedShake()
@@ -74,6 +112,10 @@ if __name__ == '__main__':
     else:
         weight = trainWord2Vec()
 
-    
+    if os.path.isfile('./TrainingTemp/RNN_word2vec-LSTM.h5'):
+        model = load_model('./TrainingTemp/RNN_word2vec-LSTM.h5')
+    else:
+        model = trainRNNvec(encodedSonnets, weight)
+
     
     pass
