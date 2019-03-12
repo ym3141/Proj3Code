@@ -7,12 +7,13 @@ wordOnlyRe = re.compile(r"[\w'-]+")
 
 puncSet = list('!,.;?\n')
 
-# Function to return a dict of the syllable dictionary
-# Key will be word, and value will be a tuple that contains several possible number of syllables
-# Note values in tuples are all str, since we have to deal with things like "E1"
-# Example: 
-# {"'gainst": ('1',), "'greeing": ('E1', '2'), "'scaped": ('1',) ... } 
+
 def loadSyllable():
+    # Function to return a dict of the syllable dictionary
+        # Key will be word, and value will be a tuple that contains several possible number of syllables
+        # Note values in tuples are all str, since we have to deal with things like "E1"
+        # Example: 
+        # {"'gainst": ('1',), "'greeing": ('E1', '2'), "'scaped": ('1',) ... } 
     syllDict = dict()
     with open('./data/Syllable_dictionary.txt') as f:
         for line in iter(lambda: f.readline(), ''):
@@ -21,16 +22,17 @@ def loadSyllable():
     return syllDict
 
 
-# Function to load sonnets and syllable dictionary of Shakespeare
-# For sonnets 
+
+def loadShake(sepPuncs=True, matchSyllableDic=True, toLower=True):
+    # Function to load sonnets and syllable dictionary of Shakespeare
+        # For sonnets 
     # Each sonnet is further separated into lines
     # Each line is further separated into words and punctuation unless specified (then punctuation will be ignored)
     # Turn on "matchSyllableDic" to make all words have a syllable dictionary entry (some messy work)
     # toLower will turn everything to lower case 
-# For syllable dict:
+        # For syllable dict:
     # Key will be word, and value will be a tuple that contains several possible number of syllables
     # Note values in tuples are all str, since we have to deal with things like "E1" 
-def loadShake(sepPuncs=True, matchSyllableDic=True, toLower=True):
     syllableDic = loadSyllable()
     sonnets = []
     with open('./data/shakespeare.txt', 'r') as f:
@@ -73,16 +75,17 @@ def loadShake(sepPuncs=True, matchSyllableDic=True, toLower=True):
     return sonnets, syllableDic
 
 
-# Function to load Shakespearean sonnets and syllable dictionary for
-# character-based model
-# sonnets: list in which each element represents a sonnet
-    # stripPunc=True: remove punctuation (except in words) and newline tokens
-    # toLower=True: convert to lower case
-    # matchSyllableDic=True: ensure that all words are in syllable dictionary
-    # (does not apply if stripPunc=False)
-# syllableDic: dict representing syllable dictionary
-    # See loadSyllable() for full documentation
+
 def loadShake_char(stripPunc=True, toLower=True, matchSyllableDic=True):
+    # Function to load Shakespearean sonnets and syllable dictionary for
+        # character-based model
+        # sonnets: list in which each element represents a sonnet
+        # stripPunc=True: remove punctuation (except in words) and newline tokens
+        # toLower=True: convert to lower case
+        # matchSyllableDic=True: ensure that all words are in syllable dictionary
+        # (does not apply if stripPunc=False)
+        # syllableDic: dict representing syllable dictionary
+    # See loadSyllable() for full documentation
     sonnets = []
     syllableDic = loadSyllable()
     
@@ -140,10 +143,11 @@ def loadShake_char(stripPunc=True, toLower=True, matchSyllableDic=True):
     return sonnets, syllableDic
 
 
-# Function to load and encode sonnets and syllable dictionary of Shakespeare
-    # Also return some useful dictionaries: the dict for number to word/punctuation/newline & the dict for punctuation to number
-    # Refer to loadShake comments for more detailed explanation
+
 def encodedShake():
+    # Function to load and encode sonnets and syllable dictionary of Shakespeare
+        # Also return some useful dictionaries: the dict for number to word/punctuation/newline & the dict for punctuation to number
+        # Refer to loadShake comments for more detailed explanation
     sonnets, syllaDict = loadShake()
     wordSetList = []
     for word in [w for sonnet in sonnets for line in sonnet for w in line]:
