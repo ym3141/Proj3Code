@@ -1,4 +1,5 @@
 import numpy as np
+import os.path
 
 from keras.models import Sequential
 from keras.layers import Dense
@@ -35,6 +36,7 @@ def gnerateEmbedTrain(encodedSonnets, window_size=4):
                     trainY.append(sonnet[kdx])
     return np.array(trainX), np.array(trainY)
 
+
 def trainWord2Vec(latentFactorN = 10, weightSave = './TrainingTemp/Word2vecWeight.npy', epoch=20):
 
     encodedSonnets, encodedSyllaDict, code2word, punc2code = encodedShake()
@@ -66,7 +68,12 @@ def most_similar_pairs(weight_matrix, word_to_index):
 
 if __name__ == '__main__':
     encodedSonnets, encodedSyllaDict, code2word, punc2code = encodedShake()
-    # weight = trainWord2Vec()
-    weight = np.load('./TrainingTemp/Word2vecWeight.npy')
-    pairs = most_similar_pairs(weight, code2word)
+
+    if os.path.isfile('./TrainingTemp/Word2vecWeight.npy'):
+        weight = np.load('./TrainingTemp/Word2vecWeight.npy')
+    else:
+        weight = trainWord2Vec()
+
+    
+    
     pass
