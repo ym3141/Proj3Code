@@ -82,6 +82,7 @@ def trainRNNvec(encodedSonnets, weight, modelSave='./TrainingTemp/RNN_word2vec-L
     trainYvec = []
 
     for i in range(len(trainX)):
+        print(trainX[i], trainY[i])
         trainYvec.append(weight[trainY[i]])
         seqX = []
         for x in trainX[i]:
@@ -99,7 +100,7 @@ def trainRNNvec(encodedSonnets, weight, modelSave='./TrainingTemp/RNN_word2vec-L
 
     # Compile and fit model
     model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
-    model.fit(trainXvec, trainYvec, batch_size=64, epochs=10, validation_split=0.2, callbacks=[early_stopping, model_checkpoint], verbose=1)
+    model.fit(trainXvec, trainYvec, batch_size=64, epochs=100, validation_split=0.2, callbacks=[early_stopping, model_checkpoint], verbose=1)
 
     return model
 
@@ -113,18 +114,18 @@ if __name__ == '__main__':
     else:
         weights = trainWord2Vec(latentFactorN=50)
 
-    # if os.path.isfile('./TrainingTemp/RNN_word2vec-LSTM.h5'):
-    #     model = load_model('./TrainingTemp/RNN_word2vec-LSTM.h5')
-    # else:
-    model = trainRNNvec(encodedSonnets, weights)
+    if os.path.isfile('./TrainingTemp/RNN_word2vec-LSTM.h5'):
+        model = load_model('./TrainingTemp/RNN_word2vec-LSTM.h5')
+    else:
+        model = trainRNNvec(encodedSonnets, weights)
 
     word2code = dict([(code2word[i], i) for i in code2word])
-    seed_text = 'shall i compare thee to a summer\'s day ? \n thou art more lovely and more temperate'
+    seed_text = 'shall i compare thee to a summer\'s day ? \n thou art more lovely and more temperate \n'
     seed_code = []
     for word in seed_text.split(' '):
         seed_code.append(word2code[word])
     
-    lines = gen_lines_word2vec(model, seed_code, weights, wordN=14)
+    lines = gen_lines_word2vec(model, seed_code, weights, lineNum=14)
 
     print(Convert2SonnetNaive(lines, code2word)[1])
         
