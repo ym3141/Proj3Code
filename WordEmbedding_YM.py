@@ -4,8 +4,8 @@ import os.path
 from keras.models import Sequential, load_model
 from keras.layers import Dense
 from keras.utils import to_categorical
-from DataProcessing import encodedShake, loadShake_char
-from RNNProcessing import build_model_LSTM
+from DataProcessing import encodedShake, loadShake_char, Convert2SonnetNaive
+from RNNProcessing import build_model_LSTM, gen_lines_word2vec
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
@@ -58,6 +58,7 @@ def trainWord2Vec(latentFactorN = 10, weightSave = './TrainingTemp/Word2vecWeigh
     model.fit(to_categorical(X), to_categorical(y), epochs=epoch, verbose=1)
 
     weights = model.layers[0].get_weights()[0]
+    weights = weights / np.max(np.abs(weights))
     np.save(weightSave, weights)
 
     return weights
@@ -97,25 +98,34 @@ def trainRNNvec(encodedSonnets, weight, modelSave='./TrainingTemp/RNN_word2vec-L
     model_checkpoint = ModelCheckpoint(modelSave, monitor='val_loss', save_best_only=True)
 
     # Compile and fit model
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    fit = model.fit(trainXvec, trainYvec, batch_size=64, epochs=200, validation_split=0.2, callbacks=[early_stopping, model_checkpoint], verbose=1)
+    model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
+    model.fit(trainXvec, trainYvec, batch_size=64, epochs=10, validation_split=0.2, callbacks=[early_stopping, model_checkpoint], verbose=1)
 
     return model
 
 
-
 if __name__ == '__main__':
     encodedSonnets, encodedSyllaDict, code2word, punc2code = encodedShake()
+    
 
     if os.path.isfile('./TrainingTemp/Word2vecWeight.npy'):
-        weight = np.load('./TrainingTemp/Word2vecWeight.npy')
+        weights = np.load('./TrainingTemp/Word2vecWeight.npy')
     else:
-        weight = trainWord2Vec()
+        weights = trainWord2Vec(latentFactorN=50)
 
-    if os.path.isfile('./TrainingTemp/RNN_word2vec-LSTM.h5'):
-        model = load_model('./TrainingTemp/RNN_word2vec-LSTM.h5')
-    else:
-        model = trainRNNvec(encodedSonnets, weight)
+    # if os.path.isfile('./TrainingTemp/RNN_word2vec-LSTM.h5'):
+    #     model = load_model('./TrainingTemp/RNN_word2vec-LSTM.h5')
+    # else:
+    model = trainRNNvec(encodedSonnets, weights)
 
+    word2code = dict([(code2word[i], i) for i in code2word])
+    seed_text = 'shall i compare thee to a summer\'s day ? \n thou art more lovely and more temperate'
+    seed_code = []
+    for word in seed_text.split(' '):
+        seed_code.append(word2code[word])
     
+    lines = gen_lines_word2vec(model, seed_code, weights, wordN=14)
+
+    print(Convert2SonnetNaive(lines, code2word)[1])
+        
     pass

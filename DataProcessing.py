@@ -26,13 +26,13 @@ def loadSyllable():
 def loadShake(sepPuncs=True, matchSyllableDic=True, toLower=True):
     # Function to load sonnets and syllable dictionary of Shakespeare
         # For sonnets 
-    # Each sonnet is further separated into lines
-    # Each line is further separated into words and punctuation unless specified (then punctuation will be ignored)
-    # Turn on "matchSyllableDic" to make all words have a syllable dictionary entry (some messy work)
-    # toLower will turn everything to lower case 
+            # Each sonnet is further separated into lines
+            # Each line is further separated into words and punctuation unless specified (then punctuation will be ignored)
+            # Turn on "matchSyllableDic" to make all words have a syllable dictionary entry (some messy work)
+            # toLower will turn everything to lower case 
         # For syllable dict:
-    # Key will be word, and value will be a tuple that contains several possible number of syllables
-    # Note values in tuples are all str, since we have to deal with things like "E1" 
+            # Key will be word, and value will be a tuple that contains several possible number of syllables
+            # Note values in tuples are all str, since we have to deal with things like "E1" 
     syllableDic = loadSyllable()
     sonnets = []
     with open('./data/shakespeare.txt', 'r') as f:

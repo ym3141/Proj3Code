@@ -116,6 +116,27 @@ def sample_code(probs, T=1):
     return code
 
 
+def sampleCloseWeight(vec, weights):
+    '''
+    Function to select a word based on how close it is to the predicted word2vec vector
+
+    Input:
+    -vec: predicted vector of the word
+    - 
+    '''
+
+    dists = []
+    for wordVec in weights:
+        dists.append(np.sum((wordVec-vec)**2))
+
+    dists = np.array(dists)
+    choices = dists.argpartition(15)[0:15]
+    # revDists = 1 / dists
+    # revDists = revDists / revDists.sum()
+
+    return np.random.choice(choices)
+        
+
 def gen_chars(model, seed, code2char, n_chars=1000, T=1,
               verbose=True):
     '''
@@ -211,6 +232,43 @@ def gen_lines(model, seed, code2char, n_lines=14, T=1, verbose=True):
         print(seq_out)
     
     return seq_out
+
+
+def gen_lines_word2vec(model, seed, weights, wordN=14):
+    '''
+    Generates text using provided model and seed text (word embedding version).
+    
+    Inputs:
+    - model: trained Keras model for word2vec input
+    - seed: initial input sequence
+    - weights: word2vec weight matrix
+    - n_lines: number of lines to generate
+    
+    Output:
+    - seqOutput: a list of ji
+    '''
+
+    seqInput = []
+    for code in seed[-10:]:
+        seqInput.append(weights[code])
+    seqInput = np.array(seqInput)
+    seqOutput = []
+    
+    # Generate characters until desired number of lines is reached
+    lines = 1
+    while lines <= wordN: 
+        # Sample character based on predicted class probabilities
+        nextVec = model.predict(seqInput[np.newaxis])
+        code = sampleCloseWeight(nextVec, weights)
+
+        seqOutput.append(code)
+        
+        # Update input sequence with new character
+        seqInput = np.concatenate((seqInput[1:], [weights[code]]))
+        if code == 3209:
+            lines += 1
+
+    return seqOutput
 
 
 def gen_lines_sylls(model, seed, code2char, syllableDic,
