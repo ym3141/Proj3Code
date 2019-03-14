@@ -86,9 +86,11 @@ def build_model_LSTM(input_shape, output_shape, n_layers=1, n_units=[128]):
     - model: Keras model representing specified architecture
     '''
     model = Sequential()
-    model.add(LSTM(n_units[0], input_shape=input_shape))
+    model.add(LSTM(n_units[0], input_shape=input_shape,
+                   return_sequences=(n_layers > 1)))
     for layer in range(1, n_layers):
-        model.add(LSTM(n_units[layer]))
+        model.add(LSTM(n_units[layer],
+                       return_sequences=(n_layers > layer + 1)))
     model.add(Dense(output_shape, activation='softmax'))
     
     return model
