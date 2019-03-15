@@ -129,14 +129,14 @@ def sampleCloseWeight(vec, weights):
 
     dists = []
     for wordVec in weights:
-        dists.append(np.sum((wordVec-vec)**2))
+        dists.append(np.sum(np.abs(wordVec-vec)))
 
     dists = np.array(dists)
-    choices = dists.argpartition(15)[0:15]
-    # revDists = 1 / dists
-    # revDists = revDists / revDists.sum()
+    # choices = dists.argpartition(10)[0:10]
+    revDists = (1 / dists) ** 7
+    revDists = revDists / revDists.sum()
 
-    return np.random.choice(choices)
+    return np.random.choice(len(revDists), p = revDists)
         
 
 def gen_chars(model, seed, code2char, n_chars=1000, T=1,
@@ -236,7 +236,7 @@ def gen_lines(model, seed, code2char, n_lines=14, T=1, verbose=True):
     return seq_out
 
 
-def gen_lines_word2vec(model, seed, weights, wordN=14):
+def gen_lines_word2vec(model, seed, weights, lineNum=14):
     '''
     Generates text using provided model and seed text (word embedding version).
     
@@ -258,17 +258,22 @@ def gen_lines_word2vec(model, seed, weights, wordN=14):
     
     # Generate characters until desired number of lines is reached
     lines = 1
-    while lines <= wordN: 
+    newlineFlag = True
+    while lines <= lineNum: 
         # Sample character based on predicted class probabilities
         nextVec = model.predict(seqInput[np.newaxis])
         code = sampleCloseWeight(nextVec, weights)
 
-        seqOutput.append(code)
+        if not (newlineFlag and code == 3209):
+            seqOutput.append(code)
+            newlineFlag = False
         
         # Update input sequence with new character
         seqInput = np.concatenate((seqInput[1:], [weights[code]]))
         if code == 3209:
-            lines += 1
+            if not newlineFlag:
+                lines += 1
+            newlineFlag = True
 
     return seqOutput
 
