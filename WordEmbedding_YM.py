@@ -82,7 +82,7 @@ def trainRNNvec(encodedSonnets, weight, modelSave='./TrainingTemp/RNN_word2vec-L
     trainYvec = []
 
     for i in range(len(trainX)):
-        print(trainX[i], trainY[i])
+        # print(trainX[i], trainY[i])
         trainYvec.append(weight[trainY[i]])
         seqX = []
         for x in trainX[i]:
@@ -92,10 +92,10 @@ def trainRNNvec(encodedSonnets, weight, modelSave='./TrainingTemp/RNN_word2vec-L
     trainXvec = np.array(trainXvec)
     trainYvec = np.array(trainYvec)
 
-    model = build_model_LSTM(trainXvec.shape[1:], trainYvec.shape[1])
+    model = build_model_LSTM(trainXvec.shape[1:], trainYvec.shape[1], n_layers=1, n_units=[256])
     model.summary()
 
-    early_stopping = EarlyStopping(monitor='val_loss', patience=50)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5)
     model_checkpoint = ModelCheckpoint(modelSave, monitor='val_loss', save_best_only=True)
 
     # Compile and fit model

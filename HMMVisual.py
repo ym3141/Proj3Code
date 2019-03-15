@@ -40,13 +40,3 @@ plt.title('State {0}'.format(stateN))
 #%%
 max5 = HMMa.flatten().argpartition(1600-5)[-5:]
 maxI, maxO = ((max5/40).astype(int), max5%40)
-
-
-
-#%%
-HMMo[:, -1].argmax()
-
-#%%
-HMMa[5, 15]
-
-#%%
